@@ -1,0 +1,31 @@
+version: 2
+
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+      - test
+      - publish:
+          filters:
+            branches:
+              only:
+                - master
+jobs:
+  test:
+    docker:
+      - image: docker:17.05.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker
+        # This should eventually only rebuilded changed dockerfiles.
+      - run: ./scripts/build.sh
+  publish:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Docker Login
+          command: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - run:
+          name: Build and publish images
+          command:  ./scripts/publish.sh
